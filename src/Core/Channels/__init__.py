@@ -69,6 +69,7 @@ class WebSocketHandler:
                 payload_length = struct.unpack(">H", data[offset : offset + 2])[0]
                 offset += 2
             elif payload_length == 127:
+                # data[2:10] contiene la longitud del payload en 8 bytes
                 payload_length = struct.unpack(">Q", data[offset : offset + 8])[0]
                 offset += 8
 
