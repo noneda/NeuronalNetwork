@@ -1,98 +1,56 @@
-"""
-Make client for REST APi
-"""
-
 import http.server
-import urllib.parse
-import json
 
-from ..Logger import Logger
+from Core.Logger import Logger
+from .Router import Router
+from .Response import Response
+from .Request import Request
 
 
-class RESTApiHandle(http.server.BaseHTTPRequestHandler):
-    """
-    Controller REST API
-    """
+class RestAPIHandler(http.server.BaseHTTPRequestHandler):
+    """Handler HTTP que usa el router"""
+
+    router: Router = None  # Se asigna desde fuera
 
     def log_message(self, format, *args):
-        """Override to use our logger instead of the default print"""
+        """Override para usar nuestro logger"""
         pass
 
-    def _set_header(self, status=200, content_type="application/json"):
-        """Configuration from server PRIVATE"""
+    def _handle_request(self):
+        """Procesa la petición usando el router"""
+        req = Request(self)
+        res = Response(self)
 
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.end_headers()
+        Logger.info(f"{req.method} {req.path} from {req.client_ip}")
 
-    def do_OPTIONS(self):
-        """CORS preflight"""
+        # Buscar ruta
+        handler, params = self.router.find_route(req.method, req.path)
 
-        Logger.log(f"OPTIONS {self.path} from {self.client_address[0]}")
-
-        self._set_header()
-
-    def _Res(self, data: dict) -> None:
-        """Basic Response HTTP"""
-
-        self.wfile.write(json.dumps(data).encode())
-
-    def _Req(self) -> dict[str, any]:
-        """Basic Request HTTP"""
-
-        content_length = int(self.headers["Content-Length"])
-        raw_data = self.rfile.read(content_length)
-        return json.loads(raw_data.decode("utf-8"))
+        if handler:
+            req._params = params
+            try:
+                handler(req, res)
+            except Exception as e:
+                Logger.error(f"Error en handler: {e}")
+                res.json({"error": "Error interno del servidor"}, 500)
+        else:
+            Logger.warning(f"Ruta no encontrada: {req.method} {req.path}")
+            res.json({"error": "Ruta no encontrada"}, 404)
 
     def do_GET(self):
-        """Get Method"""
+        self._handle_request()
 
-        # * This make a parse PATH... For get a params
-        parsed_path = urllib.parse.urlparse(self.path)
-        path = parsed_path.path
+    def do_POST(self):
+        self._handle_request()
 
-        Logger.info(f"GET {path} from {self.client_address[0]}")
+    def do_PUT(self):
+        self._handle_request()
 
-        # * This is a All Data
-        if path == "/api/get":
-            self._set_header()
-            self._Res(
-                # TODO: Here make a return All Data...
-            )
+    def do_DELETE(self):
+        self._handle_request()
 
-        # * This is with params
-        # ? Example → /api/get/{id}
-        elif path.startswith("/api/get"):
-            try:
-                id = int(path.split("/")[-1])
-                self._set_header(200)
-                self._Res(
-                    # TODO: Implement Logic to get a Data
-                )
-            except ValueError:
-                self._set_header(400)
-                self._Res({"error": "ID inválido"})
-        else:
-            self._set_headers(404)
-            self._Res({"error": "Ruta no encontrada"})
+    def do_PATCH(self):
+        self._handle_request()
 
-    def POST(self):
-        """POST Method"""
-
-        Logger.info(f"POST {self.path} desde {self.client_address[0]}")
-
-        if self.path == "/api/post":
-            data = self._Req()
-
-            # TODO: Logic for Insert Data to Neuronal Network
-            self._set_headers(201)
-            self.wfile.write(
-                # TODO: Response
-            )
-
-        else:
-            self._set_header(404)
-            self._Res({"error": "Ruta no encontrada"})
+    def do_OPTIONS(self):
+        res = Response(self)
+        res.json({}, 200)

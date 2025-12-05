@@ -1,38 +1,29 @@
-"""
-Websocket Instance
-"""
+from Core.Logger import Logger
+from Core.Channels.Router import WebSocketRouter
+from Core.Channels.Message import WebSocketMessage
+from Core.Channels.Utils.accept_key import generateAcceptKey
 
 import socket as webSocket
-import struct
-from .AcceptKey import generateAcceptKey
-from ..Logger import Logger
+import struct, json
 
 
 class WebSocketHandler:
-    """
-    Private Data
-    """
+    """Handler WebSocket con soporte de eventos"""
 
-    connect: bool = False
-    _socket: webSocket.socket
-    _address: tuple[str, int]
+    router: WebSocketRouter = None  # Se asigna desde fuera
 
     def __init__(self, client: webSocket.socket, address: tuple[str, int]):
         self._socket = client
         self._address = address
+        self.connected = False
+        self.client_data = {}  # Datos del cliente (ej: user_id, tokens, etc)
 
     def handshake(self):
-        """
-        Make handshake WebSocket about RFC 6455
-
-        Before using WebSocket, you need to "update" a regular HTTP connection.
-        """
-
+        """Handshake WebSocket según RFC 6455"""
         try:
             data = self._socket.recv(1024).decode()
             headers: dict = {}
 
-            # ? This results in a change from the HTTP protocol to WebSocket.
             for line in data.split("\r\n")[1:]:
                 if ": " in line:
                     key, value = line.split(": ", 1)
@@ -42,7 +33,7 @@ class WebSocketHandler:
                 return False
 
             key: str = generateAcceptKey(headers)
-            response: tuple = (
+            response = (
                 "HTTP/1.1 101 Switching Protocols\r\n"
                 "Upgrade: websocket\r\n"
                 "Connection: Upgrade\r\n"
@@ -58,12 +49,11 @@ class WebSocketHandler:
 
             return True
         except Exception as e:
-            Logger.error(f"Handshake Error : {e} ")
+            Logger.error(f"Handshake Error: {e}")
             return False
 
     def decode_frame(self, data):
-        """Decode a WebSocket frame"""
-        # TODO: Understand this
+        """Decodifica un frame WebSocket"""
         try:
             if len(data) < 2:
                 return None
@@ -96,8 +86,7 @@ class WebSocketHandler:
             return None
 
     def encode_frame(self, message):
-        """Encode a message in a WebSocket frame"""
-        # TODO: Understand this
+        """Codifica un mensaje en frame WebSocket"""
         message_bytes = message.encode()
         frame = bytearray([0x81])  # Text frame
 
@@ -114,22 +103,47 @@ class WebSocketHandler:
         frame.extend(message_bytes)
         return bytes(frame)
 
-    def send_message(self, message):
-        """Send a message to the customer"""
+    def send_raw(self, message: str):
+        """Envía mensaje raw (sin formato de evento)"""
         try:
-            self.socket.send(self.encode_frame(message))
-            Logger.log(f"→ Sent to {self._address[0]}: {message}")
+            self._socket.send(self.encode_frame(message))
         except Exception as e:
             Logger.error(f"Error enviando mensaje: {e}")
 
+    def emit(self, event: str, data: any):
+        """Emite un evento al cliente"""
+        try:
+            message = json.dumps({"event": event, "data": data})
+            self._socket.send(self.encode_frame(message))
+            Logger.log(f"→ [{event}] to {self._address[0]}: {data}")
+        except Exception as e:
+            Logger.error(f"Error enviando evento: {e}")
+
+    def broadcast(self, event: str, data: any, include_self: bool = False):
+        """Broadcast a todos los clientes"""
+        exclude = None if include_self else self
+        self.router.broadcast_to_all(event, data, exclude)
+
     def handle(self):
-        """Handles the WebSocket connection"""
+        """Maneja la conexión WebSocket"""
         if not self.handshake():
             self._socket.close()
             return
 
+        # Agregar a lista de clientes
+        self.router.add_client(self)
+
         Logger.info(
             f"WebSocket client connected: {self._address[0]}:{self._address[1]}"
+        )
+
+        # Evento de conexión
+        self.emit(
+            "connected",
+            {
+                "message": "Conectado exitosamente",
+                "client_id": f"{self._address[0]}:{self._address[1]}",
+            },
         )
 
         try:
@@ -138,15 +152,17 @@ class WebSocketHandler:
                 if not data:
                     break
 
-                message = self.decode_frame(data)
-                if message:
-                    Logger.log(f"← Received from {self._address[0]}: {message}")
-                    self.send_message(f"Echo: {message}")
+                raw_message = self.decode_frame(data)
+                if raw_message:
+                    msg = WebSocketMessage(self, raw_message)
+                    self.router.handle_event(msg)
 
         except Exception as e:
             Logger.error(f"WebSocket connection error: {e}")
         finally:
-            self.socket.close()
+            self.connected = False
+            self.router.remove_client(self)
+            self._socket.close()
             Logger.warning(
                 f"WebSocket client disconnected: {self._address[0]}:{self._address[1]}"
             )
