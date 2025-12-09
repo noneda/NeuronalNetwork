@@ -18,19 +18,26 @@ else:
 
 
 if model is None:
-    print("--- 🆕 Creando y Entrenando Nuevo Modelo ---")
+    print("--- 🆕 Creando y Entrenando Nuevo Modelo (Profundo) ---")
 
     study_time = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], dtype=float)
     exams_note = np.array([(obj * 5) + 50 for obj in study_time], dtype=float)
 
-    model = ks.Sequential()
-    model.add(ks.layers.Dense(units=1, input_shape=[1]))
+    model = ks.Sequential(
+        [
+            ks.layers.Dense(units=32, activation="relu", input_shape=[1]),
+            ks.layers.Dense(units=16, activation="relu"),
+            ks.layers.Dense(units=1),
+        ]
+    )
+    # ----------------------------------------------------------------------
+
     model.summary()
 
     model.compile(optimizer="adam", loss="mean_squared_error")
 
-    print("\n--- 🧠 Comenzando el Entrenamiento (2000 Épocas) ---")
-    model.fit(study_time, exams_note, epochs=2000, verbose=3)
+    print("\n--- 🧠 Comenzando el Entrenamiento (5000 Épocas) ---")
+    model.fit(study_time, exams_note, epochs=5000, verbose=3)
     print("✅ Entrenamiento terminado.")
 
     loss = model.evaluate(study_time, exams_note, verbose=0)

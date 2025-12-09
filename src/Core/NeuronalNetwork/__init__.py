@@ -45,3 +45,36 @@ def predict_note(hours: float):
         }
     except Exception as e:
         return {"error": f"Error durante la predicción: {str(e)}"}
+
+
+def retrain_model(additional_epochs: int = 500, verbose_level: int = 2):
+    """
+    Carga el modelo existente y lo entrena por épocas adicionales.
+    """
+    global loaded_model
+    global study_time
+    global exams_note
+
+    if loaded_model is None:
+        print(
+            "🛑 Error: No se puede reentrenar. El modelo no fue cargado inicialmente."
+        )
+        return
+
+    print(
+        f"\n--- 🧠 Comenzando Reentrenamiento Adicional ({additional_epochs} Épocas) ---"
+    )
+
+    history = loaded_model.fit(
+        study_time, exams_note, epochs=additional_epochs, verbose=verbose_level
+    )
+    print("✅ Reentrenamiento adicional terminado.")
+
+    loss = loaded_model.evaluate(study_time, exams_note, verbose=0)
+    print(f"Pérdida (Loss) final después del reentrenamiento: {loss:.6f}")
+
+    print(f"\n--- 💾 Guardando el Modelo Actualizado en {LOAD_PATH} ---")
+    loaded_model.save(LOAD_PATH)
+    print("✅ Modelo actualizado guardado exitosamente.")
+
+    return history
