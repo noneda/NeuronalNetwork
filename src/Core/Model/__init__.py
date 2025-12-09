@@ -8,6 +8,7 @@ from datetime import datetime
 
 class Model(metaclass=ModelMeta):
     _fields = {}
+    _many_to_many_fields = {}
     _table_name = ""
     _db = None
 
@@ -17,6 +18,9 @@ class Model(metaclass=ModelMeta):
         for name, field in self._fields.items():
             value = kwargs.get(name, field.default)
             setattr(self, name, value)
+
+        for name, field in self._many_to_many_fields.items():
+            setattr(self, name, field.get_manager(self))
 
     @classmethod
     def setup_db(cls, db):
@@ -30,6 +34,9 @@ class Model(metaclass=ModelMeta):
         cursor = cls._db.cursor()
         cursor.execute(sql)
         cls._db.commit()
+
+        for field in cls._many_to_many_fields.values():
+            field.create_through_table(cls)
 
     @classmethod
     def drop_table(cls):
@@ -161,6 +168,9 @@ class Model(metaclass=ModelMeta):
                 value = field.to_python(value)
 
             setattr(obj, name, value)
+
+        for name, field in cls._many_to_many_fields.items():
+            setattr(obj, name, field.get_manager(obj))
 
         return obj
 
