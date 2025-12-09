@@ -3,7 +3,8 @@ from tensorflow import keras as ks
 import numpy as np
 import os
 
-
+# TODO: Esto puede ser un Repository XD
+# TODO: Falta Diagramas... 
 LOAD_PATH = "./model_hours_study_saved"
 loaded_model = None
 
