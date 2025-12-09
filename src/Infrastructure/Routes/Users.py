@@ -19,4 +19,4 @@ def register_user_routes(router: Router):
     router.route("/register", methods=["POST"])(
         require_json(validate_fields("name", "password")(post_register))
     )
-    router.route("user/me/:name", methods=["GET"])(get_me)
+    router.route("/user/me/:name", methods=["GET"])(get_me)
