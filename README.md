@@ -1,6 +1,6 @@
 <<<<<<< Updated upstream
 =======
-# 🧠 BasicNeuronalNetwork
+# 🧠 BasiNeuronalNetwork
 
 **Red Neuronal para Predicción de Calificaciones** - Una aplicación que utiliza TensorFlow/Keras para predecir notas de examen basadas en horas de estudio, con una arquitectura  Hexagonal.
 
