@@ -13,14 +13,9 @@ class QuerySet:
             if '__' in field:
                 field_name, operator = field.split('__', 1)
                 ops = {
-                    'gt': '>',
-                    'gte': '>=',
-                    'lt': '<',
-                    'lte': '<=',
-                    'contains': 'LIKE',
-                    'icontains': 'LIKE',
-                    'startswith': 'LIKE',
-                    'endswith': 'LIKE'
+                    'gt': '>', 'gte': '>=', 'lt': '<', 'lte': '<=',
+                    'contains': 'LIKE', 'icontains': 'LIKE',
+                    'startswith': 'LIKE', 'endswith': 'LIKE'
                 }
                 sql_op = ops.get(operator, '=')
                 
@@ -62,9 +57,9 @@ class QuerySet:
     def get(self, **kwargs):
         results = self.filter(**kwargs).execute()
         if len(results) == 0:
-            raise Exception(f"{self.model.__name__} not found with {kwargs}")
+            raise Exception(f"{self.model.__name__} not found")
         if len(results) > 1:
-            raise Exception(f"Multiple {self.model.__name__} found with {kwargs}")
+            raise Exception(f"Multiple {self.model.__name__} found")
         return results[0]
     
     def count(self):
@@ -144,3 +139,4 @@ class QuerySet:
             return new.execute()
         else:
             return self.offset(key).limit(1).execute()[0]
+
