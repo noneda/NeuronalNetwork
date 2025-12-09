@@ -6,19 +6,46 @@ from utils.logger import Logger
 from model.neural_net import DeepLearningModel
 import numpy as np
 
+import os
+import matplotlib.pyplot as plt
+
 app = Flask(__name__)
 db = Database()
 logger = Logger()
 model = DeepLearningModel()
 
+# Generar un gráfico de pérdida/Precisión (loss/Accuracy)
+def plot_training_history(history, metric: str, filename: str = "plots/loss.png"):
+
+    os.makedirs("plots", exist_ok=True)
+    
+    plt.figure()
+    plt.plot(history.history[metric], label=f"Training {metric.capitalize()}")
+    plt.plot(history.history[f"val_{metric}"], label=f"Validation {metric.capitalize()}")
+    plt.xlabel("Epochs")
+    plt.ylabel(metric.capitalize())
+    plt.title(f"Training vs Validation {metric.capitalize()}")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(filename)
+    plt.close()
+
 # Inicializar y entrenar modelo (en producción esto se haría offline)
 def init_model():
     """Inicializar modelo con datos de ejemplo"""
     logger.info("Initializing model...")
+    if os.path.exists("models/model.keras"):
+        model.load_model()
+        logger.info("Model loaded from disk")
+        return
+    
     X_train = np.random.randn(1000, 10)
     y_train = (np.random.randn(1000, 1) > 0).astype(float)
-    model.train(X_train, y_train, epochs=10)
+    history = model.train(X_train, y_train, epochs=10)
     logger.info("Model initialized and trained")
+    plot_training_history(history, metric="loss", filename="plots/loss.png")
+    # guardar modelo
+    model.save_model()
 
 # Decorador para autenticación
 def require_auth(f):

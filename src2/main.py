@@ -5,6 +5,8 @@ from utils.logger import Logger
 from utils.database import Database
 from model.neural_net import DeepLearningModel
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 
 def main():
     """Función principal"""
@@ -32,8 +34,14 @@ def main():
         user_id = user['id'] if user else None
     
     # Inicializar y entrenar modelo
-    model = DeepLearningModel(input_dim=10)
-    logger.info("Model created")
+    model = DeepLearningModel()
+
+    if os.path.exists("models/model.keras"):
+        model.load_model()
+        logger.info("Model loaded from disk")
+    else:
+        model = DeepLearningModel(input_dim=10)
+        logger.info("Model created")
     
     # Datos de entrenamiento simulados
     X_train = np.random.randn(1000, 10)
@@ -41,6 +49,21 @@ def main():
     
     logger.info("Training model...")
     history = model.train(X_train, y_train, epochs=20, batch_size=32)
+
+    os.makedirs("plots", exist_ok=True)
+
+    plt.figure()
+    plt.plot(history.history["loss"], label="Training Loss")
+    plt.plot(history.history["val_loss"], label="Validation Loss")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.title("Training vs Validation Loss")
+    plt.legend()
+    plt.grid(True)
+
+    # Guardar imagen
+    plt.savefig("plots/loss1.png")
+    plt.close()
     
     # Hacer predicción de prueba
     test_text = "This is a test prediction"
