@@ -5,6 +5,7 @@ from Application.Serializer.Prediction import PredictionSerializer
 from Application.Util.Graphics import generate_predictions_chart
 from Core.NeuronalNetwork import retrain_model
 from Core.Logger import Logger
+import os
 
 
 interfase = InterfasePrediction()
@@ -111,5 +112,3 @@ def retrain_model_endpoint(req: Request, res: Response):
     except Exception as e:
         Logger.log(f"Error en retrain_model_endpoint: {e}")
         return res.json({"message": "Error during retrain", "error": str(e)}, 500)
-    except Exception as e:
-        return res.json({"message": "Error generating chart", "error": str(e)}, 500)

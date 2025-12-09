@@ -8,6 +8,10 @@ import os
 LOAD_PATH = "./model_hours_study_saved.keras"
 loaded_model = None
 
+# Datos de entrenamiento por defecto (usados en retrain_model)
+study_time = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], dtype=float)
+exams_note = np.array([(obj * 5) + 50 for obj in study_time], dtype=float)
+
 try:
     if not os.path.exists(LOAD_PATH):
         raise FileNotFoundError(f"El directorio del modelo no existe en: {LOAD_PATH}")
