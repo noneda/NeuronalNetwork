@@ -12,10 +12,10 @@ class InterfaseUser(UserService):
         if self.get_by_username(username):
             raise Exception("El usuario ya existe")
 
-        return self.create_user(username, password)
+        return self().create_user(username, password)
 
     def login(self, username: str, password: str) -> bool:
-        user = self.get_by_username(username)
+        user = self().get_by_username(username)
 
         if not user:
             return False

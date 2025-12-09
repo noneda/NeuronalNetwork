@@ -5,6 +5,7 @@ from Core.Api.Middleware.validate_fields import validate_fields
 from Application.Controller.Users import (
     post_login,
     post_register,
+    get_me,
     # get_by_id,
     # update_user,
     # delete_delete,
@@ -12,13 +13,10 @@ from Application.Controller.Users import (
 
 
 def register_user_routes(router: Router):
-    router.post("/login", methods=["POST"])(
-        require_json(validate_fields("user", "prompt")(post_login))
+    router.route("/login", methods=["POST"])(
+        require_json(validate_fields("name", "password")(post_login))
     )
-    router.get("/register", methods=["POST"])(
-        require_json(validate_fields("user", "prompt")(post_register))
+    router.route("/register", methods=["POST"])(
+        require_json(validate_fields("name", "password")(post_register))
     )
-
-    # router.get("/predictions/:id")(get_by_id)
-    # router.put("/predictions/:id")(update_prediction)
-    # router.delete("/predictions/:id")(delete_prediction)
+    router.route("user/me/:name", methods=["GET"])(get_me)

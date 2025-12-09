@@ -15,7 +15,7 @@ def register_prediction_routes(router: Router):
     router.route("/predictions", methods=["POST"])(
         require_json(validate_fields("user", "prompt")(create_prediction))
     )
-    router.route("/predictions", methods=["GET"])(get_by_user)
+    router.route("/predictions/:user", methods=["GET"])(get_by_user)
 
     # router.get("/predictions/:id")(get_by_id)
     # router.put("/predictions/:id")(update_prediction)
