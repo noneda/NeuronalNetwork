@@ -3,10 +3,9 @@ from tensorflow import keras as ks
 import numpy as np
 import os
 
-SAVE_PATH = "./model_hours_study_saved"
+SAVE_PATH = "./model_hours_study_saved.keras"
 
-
-if os.path.isdir(SAVE_PATH):
+if os.path.exists(SAVE_PATH) and not os.path.isdir(SAVE_PATH):
     print(f"--- 🔄 Cargando Modelo Existente de: {SAVE_PATH} ---")
     try:
         model = ks.models.load_model(SAVE_PATH)
@@ -38,5 +37,5 @@ if model is None:
     print(f"Pérdida (Loss) final del modelo: {loss:.6f}")
 
     print(f"\n--- 💾 Guardando el Modelo en {SAVE_PATH} ---")
-    model.export(SAVE_PATH)
+    model.save(SAVE_PATH)
     print("✅ Modelo guardado exitosamente.")

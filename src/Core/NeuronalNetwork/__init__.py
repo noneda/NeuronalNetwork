@@ -4,12 +4,12 @@ import numpy as np
 import os
 
 # TODO: Esto puede ser un Repository XD
-# TODO: Falta Diagramas... 
-LOAD_PATH = "./model_hours_study_saved"
+# TODO: Falta Diagramas...
+LOAD_PATH = "./model_hours_study_saved.keras"
 loaded_model = None
 
 try:
-    if not os.path.isdir(LOAD_PATH):
+    if not os.path.exists(LOAD_PATH):
         raise FileNotFoundError(f"El directorio del modelo no existe en: {LOAD_PATH}")
 
     print("Cargando el modelo de Keras (Formato SavedModel)...")

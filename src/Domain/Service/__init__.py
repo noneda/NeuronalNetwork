@@ -12,7 +12,7 @@ class BaseService(Generic[T]):
 
     def __init__(self, model: type[T]):
         self.model = model
-        db = GlobalSqlite.getDataBase()
+        db = GlobalSqlite.get_database()
         self.model.setup_db(db)
         self.model.create_table()
 
